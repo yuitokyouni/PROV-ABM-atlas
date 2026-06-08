@@ -31,7 +31,7 @@
 
 | 領域 | v0 で実装する | v0 で touch しない |
 |------|----------|---------------|
-| Toy experiment | 完全実装。`docs/experimental_design_v0.2.md` を pre-registered spec として扱う | 判定基準の post-hoc 修正 |
+| Toy experiment | 完全実装。`docs/experimental_design_v0.3.md` を pre-registered spec として扱う | 判定基準の post-hoc 修正 |
 | PROV-ABM | L2 capture(`ctx.*` API、reported reach、最低限の seed/config/output 記録) | L3+ AST whitelist、taint、validator strict 拒否ロジック、may\\must gap 計算、Lean 形式化 |
 | Atlas | Battery/Mechanism/Response の抽象 protocol scaffold(空 class、type hint のみ) | 実際の battery 実装、leaderboard infrastructure、scoring 機構、Type2 survival test |
 
@@ -52,7 +52,7 @@ real-prism/
 ├── .github/workflows/         # CI(pytest + ruff + mypy)
 ├── .pre-commit-config.yaml
 ├── docs/
-│   ├── experimental_design_v0.2.md   # pre-registered spec(§2/§14 post-hoc 変更禁止)
+│   ├── experimental_design_v0.3.md   # pre-registered spec(§2/§14 post-hoc 変更禁止)
 │   └── prov_abm_design_notes.md      # PROV-ABM/Atlas 設計ノート
 ├── provabm/                   # framework パッケージ
 │   ├── __init__.py
@@ -151,7 +151,7 @@ real-prism/
 
 ## 事前登録(pre-registered)制約
 
-`docs/experimental_design_v0.2.md` の **§2(仮説と判定基準)と §14(decision tree)は post-hoc 変更禁止**。
+`docs/experimental_design_v0.3.md` の **§2(仮説と判定基準)と §14(decision tree)は post-hoc 変更禁止**。
 
 実装中に「この基準は厳しすぎる/緩すぎる」「サンプルサイズを減らせば速い」と気づいても、勝手に動かすな。**Issue を立てて Yuito の判断を仰げ。** これが pre-registration の核心で、ここを緩めると本 repo の価値が消える。
 
@@ -159,7 +159,7 @@ real-prism/
 
 ## 留保 1/2(解決済み・v0.2)
 
-`docs/experimental_design_v0.2.md` で留保 1/2 を default で解決済み(2026-06-08 Yuito confirm)。
+`docs/experimental_design_v0.3.md` で留保 1/2 を default で解決済み(2026-06-08 Yuito confirm)。
 
 - **留保 1 → 相互等価性 anchor**: Model T を固定点 T* に置き、Model H を SF1-4 距離最小化で calibrate。実データ(S&P500)参照は外す(spec §5.2)。
 - **留保 2 → SF1-4 を calibration target、SF5/6 を post-equivalence 独立検証量**(spec §4 末尾・§5.1・§6.1。SF classifier 入力は SF1-4 の 4 次元)。
@@ -208,6 +208,6 @@ real-prism/
 
 ## 参考文献
 
-- `docs/experimental_design_v0.2.md` — pre-registered 実験設計
+- `docs/experimental_design_v0.3.md` — pre-registered 実験設計
 - `docs/prov_abm_design_notes.md` — PROV-ABM / Atlas 戦略・設計ノート
-- 学術文献は `docs/experimental_design_v0.2.md` の Appendix C
+- 学術文献は `docs/experimental_design_v0.3.md` の Appendix C
