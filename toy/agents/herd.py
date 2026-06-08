@@ -57,18 +57,25 @@ class HerdAgent(Agent):
 
 
 def build_herd_population(
-    n: int, rng: np.random.Generator, beta: tuple[float, float, float] | None = None
+    n: int,
+    rng: np.random.Generator,
+    beta: tuple[float, float, float] | None = None,
+    hs_range: tuple[int, int] | None = None,
 ) -> list[HerdAgent]:
     """Kirman/Lux-Marchesi 型集団を生成。
 
-    `beta`(herder, fundamentalist, noise 比率)を渡すと既定 ALPHA を上書き(calibration 用)。
+    `beta`(herder, fundamentalist, noise 比率)・`hs_range`(horizon レンジ)を渡すと既定を
+    上書き(calibration 用)。
     """
+    p = np.asarray(beta if beta is not None else ALPHA, dtype=np.float64)
+    p = p / p.sum()  # 丸め誤差で sum≠1 になっても正規化(choice は厳密な 1.0 を要求)
     components = rng.choice(
         [HComponent.HERDER, HComponent.FUNDAMENTALIST, HComponent.NOISE],
         size=n,
-        p=list(beta if beta is not None else ALPHA),
+        p=p,
     )
-    horizons = rng.integers(HS_MIN, HS_MAX + 1, size=n)
+    h_lo, h_hi = hs_range if hs_range is not None else (HS_MIN, HS_MAX)
+    horizons = rng.integers(h_lo, h_hi + 1, size=n)
     agents: list[HerdAgent] = []
     for comp, h in zip(components, horizons, strict=True):
         theta = (

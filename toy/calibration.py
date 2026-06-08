@@ -47,8 +47,9 @@ def sf_distribution(
     params: MarketParams,
     n_runs: int,
     base_seed: int,
+    hs_range: tuple[int, int] | None = None,
 ) -> npt.NDArray[np.float64]:
-    """(model, mix) で n_runs 回まわし SF1-4 ベクトルの分布 (n_runs, 4) を返す。"""
+    """(model, mix[, hs_range]) で n_runs 回まわし SF1-4 ベクトルの分布 (n_runs, 4) を返す。"""
     rows = []
     for ri in range(n_runs):
         ss = np.random.SeedSequence(base_seed + ri).spawn(1 + params.n_agents)
@@ -56,7 +57,7 @@ def sf_distribution(
         agents = (
             build_trend_population(params.n_agents, prng, mix)
             if model == "T"
-            else build_herd_population(params.n_agents, prng, mix)
+            else build_herd_population(params.n_agents, prng, mix, hs_range)
         )
         drngs = [np.random.default_rng(s) for s in ss[1:]]
         result = run_simulation(params, agents, drngs, CaptureSink(CaptureLevel.L0))
@@ -117,3 +118,53 @@ def calibrate_sf_equivalent(
             )
     assert best is not None
     return best, log
+
+
+@dataclass(frozen=True, slots=True)
+class HerdCandidate:
+    """探索した H の点(β + horizon レンジ)。"""
+
+    beta: tuple[float, float, float]
+    hs_range: tuple[int, int]
+    distance: float
+    sf_h: dict[str, float]
+
+
+def calibrate_search(
+    *, seed: int, n_trials: int = 60, n_runs: int = 10, params: MarketParams = CALIB_MARKET
+) -> tuple[HerdCandidate, dict[str, float], list[HerdCandidate]]:
+    """T* を固定し、H の (β, horizon レンジ) をランダム探索で SF1-4 距離最小化(§5.2 拡張)。
+
+    β 単独の grid では SF1/SF2 が埋まらなかったため、horizon レンジも探索空間に入れる。
+    返り値: (最良 HerdCandidate, T* の SF1-4 平均, 全 trial log)。
+    """
+    ref = sf_distribution("T", T_STAR_ALPHA, params, n_runs, base_seed=seed)
+    sf_t_mean = {k: float(ref[:, i].mean()) for i, k in enumerate(CALIBRATION_SF)}
+    srng = np.random.default_rng(seed)
+
+    log: list[HerdCandidate] = []
+    best: HerdCandidate | None = None
+    for trial in range(n_trials):
+        herder = float(srng.uniform(0.15, 0.55))
+        fund = float(srng.uniform(0.30, 0.70))
+        noise = round(1.0 - herder - fund, 3)
+        if noise < 0.05:
+            continue
+        beta = (round(herder, 3), round(fund, 3), noise)
+        lo = int(srng.integers(3, 21))
+        hi = int(srng.integers(lo + 5, 61))
+        h_dist = sf_distribution(
+            "H", beta, params, n_runs, base_seed=seed + 1000 * (trial + 1), hs_range=(lo, hi)
+        )
+        dist = sliced_wasserstein(ref, h_dist)
+        cand = HerdCandidate(
+            beta=beta,
+            hs_range=(lo, hi),
+            distance=dist,
+            sf_h={k: float(h_dist[:, i].mean()) for i, k in enumerate(CALIBRATION_SF)},
+        )
+        log.append(cand)
+        if best is None or dist < best.distance:
+            best = cand
+    assert best is not None
+    return best, sf_t_mean, log

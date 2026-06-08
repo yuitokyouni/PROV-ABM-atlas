@@ -69,10 +69,12 @@ def build_trend_population(
 
     `alpha`(chartist, fundamentalist, noise 比率)を渡すと既定 ALPHA を上書き(calibration 用)。
     """
+    p = np.asarray(alpha if alpha is not None else ALPHA, dtype=np.float64)
+    p = p / p.sum()  # 丸め誤差で sum≠1 になっても正規化(choice は厳密な 1.0 を要求)
     components = rng.choice(
         [TComponent.CHARTIST, TComponent.FUNDAMENTALIST, TComponent.NOISE],
         size=n,
-        p=list(alpha if alpha is not None else ALPHA),
+        p=p,
     )
     horizons = rng.integers(H_MIN, H_MAX + 1, size=n)
     agents: list[TrendAgent] = []
