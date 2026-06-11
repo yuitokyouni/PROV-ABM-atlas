@@ -70,14 +70,14 @@ P3 の被監査モデル（LLM-ABM）は当面 C0 適合のラッパーから始
 
 | アダプタ | 機構 | 状態 | 契約上の役割 |
 |---|---|---|---|
-| CB | Cont-Bouchaud | 新規実装（port 無し） | **識別トリオ（古典）**。channels = () → {CB, ZI} 応答等価類の事前予測（claims §2.2） |
-| LM | Lux-Marchesi | port 草稿あり（`feat/intervention-sweep` の `toy/models/lm.py`、v0.3 API 適合要） | **識別トリオ（古典）**。部分観測の B2 切り出しが設計判断 |
-| ALW | Alfarano-Lux-Wagner | toy H（Kirman/ALW 型）が母体 | **識別トリオ（古典）** |
+| CB | Cont-Bouchaud | 新規実装（port 無し） | **応答等価類 {CB, ZI}**（v1.3: 識別トリオ外）。channels = () → 応答等価の事前予測（claims §2.2） |
+| LM | Lux-Marchesi | port 草稿あり（`feat/intervention-sweep` の `toy/models/lm.py`、v0.3 API 適合要） | **拡張候補**（v1.3 demote。lineage は T の対応表で保持）。部分観測の B2 切り出しが設計判断 |
+| ALW | Alfarano-Lux-Wagner | toy H（Kirman/ALW 型）が母体 | **識別トリオ（composite 古典）**。H に fundamentalist block を戻す導出 |
 | ZI | zero-intelligence | port 草稿あり（同 branch `zi.py`）。**Farmer-Patelli-Zovko (2005) 原典 audit 通過まで正準と見なさない** | 陰性対照（channels = ()）。SF battery 通過は期待しない（claims §2.2 v1.2、射程は microstructure 系 SF） |
 | Genoa-ZI+ | Genoa 人工市場（Raberto et al. 2001 系） | 新規実装（**自前で SF 通過確認できた場合のみ採用**、claims §2.2） | 戦略フリー対照（channels = ("volatility",)——SF 等価集合と IR 識別 family の両方に入る唯一の非行動的機構） |
-| T | Chiarella-Iori 型 trend-following | toy 実装済（v0.3 正準） | toy §14 判定の主役 → paper-grade では補助機構 |
-| H | Kirman/ALW 型 herding | toy 実装済（v0.3 正準） | 同上（ALW アダプタの母体） |
-| SG | Speculation Game | port 草稿あり（同 branch `sg.py`） | 補助機構（トリオ外） |
+| T | Chiarella-Iori 型 trend-following | toy 実装済（v0.3 正準） | **識別トリオ（正典 block 単離）**：FW/LM/CIP 共通チャーティスト需要 block、switching 凍結（claims v1.3 §2.2）。toy §14 判定の主役を兼ねる |
+| H | Kirman/ALW 型 herding | toy 実装済（v0.3 正準） | **識別トリオ（正典 block 単離）**：Kirman 1993 遷移率 = ALW noise-trader block（claims v1.3 §2.2）。ALW アダプタの母体 |
+| SG | Speculation Game | port 草稿あり（同 branch `sg.py`） | **不採用**（v1.3：恣意性ゆえ正典性を欠く。草稿は archive） |
 | FW | Franke-Westerhoff | port 草稿あり（同 branch `fw.py`） | 将来拡張候補 |
 | microstructure-002 | ABM-Microstructure 実験B harness | 将来 feature | **最初の外部アダプタ**（P2 = Atlas の最初の実監査） |
 

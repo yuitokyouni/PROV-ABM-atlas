@@ -210,4 +210,6 @@ real-prism/
 
 - `docs/experimental_design_v0.3.md` — pre-registered 実験設計
 - `docs/prov_abm_design_notes.md` — PROV-ABM / Atlas 戦略・設計ノート
+- `docs/program_claims_v1.md` — P1/P2/P3 研究プログラム主張構造の一次ソース(claim-first ループ。P1 トリオ構成・検出力設計・縮退規則はここ。P2 = `../ABM-Microstructure`)
+- `docs/model_contract_v0.md` — 被監査シミュレータの最小契約 draft(toy が必要とするまで `atlas/protocols.py` へ実装反映しない)
 - 学術文献は `docs/experimental_design_v0.3.md` の Appendix C
