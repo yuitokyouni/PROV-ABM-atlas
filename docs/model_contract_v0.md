@@ -55,6 +55,7 @@ class Intervention:
 2. **チャネルは静的宣言**。battery は内部実装を知らずに介入面を列挙できる——監査が機構の数に対してスケールする条件。宣言漏れ（実際は観測しているのに宣言しない）は L2 provenance（ctx 経由の観測ログ）との突合で検出する。これが「reported reach」と契約の接続点。
 3. **θ=0 恒等性**。`intervene(θ=0)` は no-op と bit 同一であること（property test 対象）。介入実装そのものが軌道を汚す bug を型ではなく契約検査で塞ぐ。
 4. **決定論は契約の地金**。reset(seed) の bit 再現が崩れた実装は監査不能（CRN paired 差分が定義できない）。
+5. **介入乱数の副流隔離**。乱数を消費する scheme（observation noise 等）は、全モデルストリームから隔離された専用 intervention substream から draw する。θ を変えてもモデル側ストリームの消費列は変わらないこと（CRN 整列不変量）。channels = () の被験体で trajectory の bit 恒等（Null-0）を検査することが、この不変量と「未宣言読取りなし」の end-to-end 検証になる——channels = () の応答ゼロは恒等（型定理）であって経験的予測ではない（claims §2 (iii)）。
 
 ## 3. 適合レベル
 
