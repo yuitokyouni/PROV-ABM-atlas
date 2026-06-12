@@ -202,6 +202,8 @@ real-prism/
 - Yuito の確認が必要な判断ポイントは GitHub Issue を立てて待つ。勝手に進めない。
 - 留保が残ってる領域の関数は `raise NotImplementedError("awaiting v0.2: 留保 N decision")` で明示。
 - 各 PR の description には「(a) 実装スコープ、(b) 設計 spec のどこに対応するか、(c) 残った TODO」を書く。
+- 各 PR の description は**冒頭に平文 3 行要約**(何を変えたか / なぜか / Yuito が判断すべき点)を置く。専門語は `docs/overview_plain.md` の用語集に載っているものだけ。新語を使うなら用語集に追加してから。
+- **Yuito の未マージ PR が残っている間は、新しい設計文書を作らない**(生成速度を読者の消化速度に律速させる)。例外は Yuito の明示依頼のみ。戦略が変わったら `docs/overview_plain.md` を必ず同じ PR で更新する。
 - design 仕様と実装が乖離したら spec を更新する(逆ではない)。spec が ground truth。
 
 ---
