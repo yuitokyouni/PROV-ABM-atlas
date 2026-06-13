@@ -1,9 +1,14 @@
-"""herd — Model H(群れ、原典: Kirman 1993 / Lux-Marchesi 1999 / Alfarano-Lux-Wagner 2008)。
+"""herd — Model H(群れ、閾値つき herding。原典: Granovetter 1978 threshold model、
+herding 系譜として Kirman 1993 / Lux-Marchesi 1999 / Alfarano-Lux-Wagner 2008 を参考)。
 
 T と土台を揃え、speculative 成分だけ trend→herd に変えた混合: fundamentalist(錨)+ herder
-(他者の集約行動をコピー)+ noise(自走)。fundamentalist がファンダに引き戻すことで価格は
-有界になり、herder が opinion を溜める → たまに大きく振れる(fat tails / ボラ集中)。純 herding
-(錨なし)は単調暴走して SF が出ないため、原典(ALW は fundamentalist 錨を持つ)に忠実な形にする。
+(他者の集約行動を読む)+ noise(自走)。
+
+**閾値(間欠性)= H の clustering の素**(2026-06-13 確定、Issue #11): herder は集約 consensus が
+**閾値 θ_h を超えた時だけ**多数派に同調し、弱い consensus では不活性(action=0)。この off 状態が
+「consensus 強→一斉発火(高ボラ)/弱→静穏(低ボラ)」の間欠を生み volatility clustering になる。
+閾値なし常時発火だと relaxation 振動になり SF が出ない(持続 Kirman/ALW 機構は超過需要 drift
+chassis と非互換のため、Granovetter 流の閾値 herding を採用。詳細 Issue #11)。
 
 機構の差(T vs H): speculative 成分が読む観測が、価格トレンド(T)か他者の行動(H)か。
 → trend masking は T を、social masking は H を叩く(spec §7.2)。
@@ -24,6 +29,7 @@ from toy.observation import AGG_ACTION, FUNDAMENTAL
 ALPHA = (0.5, 0.3, 0.2)  # (herder, fundamentalist, noise) 母集団比率
 HS_MIN, HS_MAX = 5, 50  # 観測 horizon
 THETA_F_MIN, THETA_F_MAX = 0.0, 0.01  # fundamentalist 発火閾値(誤価格)
+THETA_H_MIN, THETA_H_MAX = 0.05, 0.25  # herder consensus 閾値(間欠性。0 で常時発火=旧挙動)
 
 
 class HComponent(StrEnum):
@@ -46,7 +52,11 @@ class HerdAgent(Agent):
 
         if self.component is HComponent.HERDER:
             social = ctx.observe(AGG_ACTION)[-self.horizon :]
-            return int(np.sign(float(social.mean())))  # 多数派に同調(他者をコピー)
+            m = float(social.mean())
+            # 閾値(間欠性): consensus が強い時だけ多数派に同調、弱ければ不活性。
+            if abs(m) > self.theta:
+                return int(np.sign(m))
+            return 0
 
         # FUNDAMENTALIST(錨)
         window = ctx.observe(FUNDAMENTAL)[-self.horizon :]
@@ -61,11 +71,13 @@ def build_herd_population(
     rng: np.random.Generator,
     beta: tuple[float, float, float] | None = None,
     hs_range: tuple[int, int] | None = None,
+    theta_h_range: tuple[float, float] | None = None,
 ) -> list[HerdAgent]:
-    """Kirman/Lux-Marchesi 型集団を生成。
+    """閾値つき herding 集団を生成。
 
-    `beta`(herder, fundamentalist, noise 比率)・`hs_range`(horizon レンジ)を渡すと既定を
-    上書き(calibration 用)。
+    `beta`(herder, fundamentalist, noise 比率)・`hs_range`(horizon レンジ)・
+    `theta_h_range`(herder consensus 閾値レンジ)を渡すと既定を上書き(calibration 用)。
+    `theta_h_range=None` では herder 閾値 = 0(常時発火=旧挙動、後方互換)。
     """
     p = np.asarray(beta if beta is not None else ALPHA, dtype=np.float64)
     p = p / p.sum()  # 丸め誤差で sum≠1 になっても正規化(choice は厳密な 1.0 を要求)
@@ -76,12 +88,14 @@ def build_herd_population(
     )
     h_lo, h_hi = hs_range if hs_range is not None else (HS_MIN, HS_MAX)
     horizons = rng.integers(h_lo, h_hi + 1, size=n)
+    th_lo, th_hi = theta_h_range if theta_h_range is not None else (0.0, 0.0)
     agents: list[HerdAgent] = []
     for comp, h in zip(components, horizons, strict=True):
-        theta = (
-            float(rng.uniform(THETA_F_MIN, THETA_F_MAX))
-            if comp == HComponent.FUNDAMENTALIST
-            else 0.0
-        )
+        if comp == HComponent.FUNDAMENTALIST:
+            theta = float(rng.uniform(THETA_F_MIN, THETA_F_MAX))
+        elif comp == HComponent.HERDER:
+            theta = float(rng.uniform(th_lo, th_hi))  # consensus 閾値(間欠性)
+        else:
+            theta = 0.0
         agents.append(HerdAgent(HComponent(comp), int(h), theta))
     return agents

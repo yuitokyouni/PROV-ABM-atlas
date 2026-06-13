@@ -94,14 +94,13 @@ def _run_kernel(
                             trend = mean / sd
                             if trend > theta[i] or -trend > theta[i]:
                                 a = 1 if trend > 0.0 else -1
-                    else:  # herder: 集約行動 mean の符号
+                    else:  # herder: 集約行動 mean の符号、閾値 theta[i] で間欠化
                         s = 0.0
                         for j in range(t - ll, t):
                             s += agg_full[j]
-                        if s > 0.0:
-                            a = 1
-                        elif s < 0.0:
-                            a = -1
+                        mean = s / ll
+                        if mean > theta[i] or -mean > theta[i]:
+                            a = 1 if mean > 0.0 else -1
             ed += a
 
         new_price = price * np.exp(lam * ed / n)
@@ -121,6 +120,7 @@ def _extract_arrays(
     n: int,
     prng: np.random.Generator,
     hs_range: tuple[int, int] | None,
+    theta_h_range: tuple[float, float] | None,
 ) -> tuple[npt.NDArray[np.int64], npt.NDArray[np.int64], npt.NDArray[np.float64], int]:
     """参照の build 関数で集団を生成し、(component_code, horizon, theta, model_code) を抽出。
 
@@ -137,7 +137,7 @@ def _extract_arrays(
         horizon = np.array([a.horizon for a in agents_t], dtype=np.int64)
         theta = np.array([a.theta for a in agents_t], dtype=np.float64)
         return comp, horizon, theta, 0
-    agents_h = build_herd_population(n, prng, mix, hs_range)
+    agents_h = build_herd_population(n, prng, mix, hs_range, theta_h_range)
     cmap_h = {
         HComponent.HERDER: COMP_SPEC,
         HComponent.FUNDAMENTALIST: COMP_FUND,
@@ -156,6 +156,7 @@ def run_fast(
     *,
     seed: int,
     hs_range: tuple[int, int] | None = None,
+    theta_h_range: tuple[float, float] | None = None,
 ) -> npt.NDArray[np.float64]:
     """高速経路で 1 run。measure 期間の log-return 系列を返す(参照 run_simulation と等価目的)。
 
@@ -163,7 +164,9 @@ def run_fast(
     """
     ss = np.random.SeedSequence(seed).spawn(1 + params.n_agents)
     prng = np.random.default_rng(ss[0])
-    comp, horizon, theta, model_code = _extract_arrays(model, mix, params.n_agents, prng, hs_range)
+    comp, horizon, theta, model_code = _extract_arrays(
+        model, mix, params.n_agents, prng, hs_range, theta_h_range
+    )
     kernel_seed = int(np.random.SeedSequence(seed + 999_983).generate_state(1)[0])
     return _run_kernel(
         comp,
