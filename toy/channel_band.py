@@ -21,6 +21,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal, overload
 
 import numpy as np
 import numpy.typing as npt
@@ -46,16 +47,56 @@ class BandParams:
 DEFAULT_PARAMS = BandParams()
 
 
+def _mom(
+    s: npt.NDArray[np.float64],
+    s2: npt.NDArray[np.float64],
+    t: int,
+    lo: npt.NDArray[np.int64],
+) -> npt.NDArray[np.float64]:
+    """prefix-sum (s, s2) から窓 [lo, t) の正規化モメンタム mean/std を O(1)/agent で。"""
+    w = np.maximum(t - lo, 1)
+    mean = (s[t] - s[lo]) / w
+    var = (s2[t] - s2[lo]) / w - mean**2
+    out: npt.NDArray[np.float64] = mean / np.sqrt(np.maximum(var, 1e-12))
+    return out
+
+
+@overload
 def simulate(
-    model: str,  # "A" = price-reader / "B" = orderflow-reader
+    model: str,
+    batch_interval: int,
+    seed: int,
+    params: BandParams = ...,
+    *,
+    with_flow: Literal[False] = False,
+) -> npt.NDArray[np.float64]: ...
+
+
+@overload
+def simulate(
+    model: str,
+    batch_interval: int,
+    seed: int,
+    params: BandParams = ...,
+    *,
+    with_flow: Literal[True],
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]: ...
+
+
+def simulate(
+    model: str,  # "A"=price-reader / "B"=orderflow-reader / "adaptive"=学習(高|mom|チャネル)
     batch_interval: int,
     seed: int,
     params: BandParams = DEFAULT_PARAMS,
-) -> npt.NDArray[np.float64]:
+    *,
+    with_flow: bool = False,
+) -> npt.NDArray[np.float64] | tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """1 run。batch 境界ごとの log-return 系列(実際の価格変化)を返す。
 
-    model="A": speculator は価格 return チャネルを読む。"B": 注文流チャネルを読む。
-    batch_interval=1 で連続市場(return=λ·flow → A と B は bit 同一)。
+    model="A": 価格 return チャネルを読む。"B": 注文流チャネル。"adaptive": 各 speculator が
+    直近で |momentum| の大きいチャネルを選ぶ最小学習則(連続では両者同一なので A と一致、
+    batch では情報のある注文流へ移行)。batch_interval=1 で連続市場(return=λ·flow → A=B bit 同一)。
+    with_flow=True で (batch_returns, 毎期 order-flow 系列) を返す(microstructure facts 用、案3)。
     """
     p = params
     rng = np.random.default_rng(seed)
@@ -66,32 +107,39 @@ def simulate(
     hs = rng.integers(p.h_min, p.h_max + 1, size=int(spec.sum()))
 
     total = p.burn_in + p.steps
-    sig_s = np.zeros(total + 1)  # signal 系列の prefix sum(model 依存)
-    sig_s2 = np.zeros(total + 1)
+    # 価格 return と 注文流 の両チャネルの prefix sum を保持(model がどちらを読むか選ぶ)。
+    p_s = np.zeros(total + 1)
+    p_s2 = np.zeros(total + 1)
+    f_s = np.zeros(total + 1)
+    f_s2 = np.zeros(total + 1)
     price = p.p_star
     acc_ed = 0.0
     bret: list[float] = []
+    flow_series: list[float] = []
 
     for t in range(total):
-        # speculator: 自分の horizon 窓上の正規化モメンタム(prefix-sum で O(1)/agent)
         if t > 0:
             lo = np.clip(t - hs, 0, t)
-            w = np.maximum(t - lo, 1)
-            mean = (sig_s[t] - sig_s[lo]) / w
-            var = (sig_s2[t] - sig_s2[lo]) / w - mean**2
-            mom = mean / np.sqrt(np.maximum(var, 1e-12))
-            a_spec = np.where(np.abs(mom) > p.theta_chartist, np.sign(mom), 0.0)
+            pmom = _mom(p_s, p_s2, t, lo)  # 価格チャネルの momentum
+            fmom = _mom(f_s, f_s2, t, lo)  # 注文流チャネルの momentum
+            if model == "A":
+                sig = pmom
+            elif model == "B":
+                sig = fmom
+            else:  # adaptive: 各 agent が高|momentum|チャネルを選ぶ
+                sig = np.where(np.abs(fmom) > np.abs(pmom), fmom, pmom)
+            a_spec = np.where(np.abs(sig) > p.theta_chartist, np.sign(sig), 0.0)
             ed = float(a_spec.sum())
         else:
             ed = 0.0
-        # fundamentalist: 現在の誤価格(全員同質)
-        m = float(np.log(p.p_star / price))
+        m = float(np.log(p.p_star / price))  # fundamentalist 錨
         if abs(m) > p.theta_fund:
             ed += n_fund * np.sign(m)
-        # noise
-        ed += float(rng.integers(-1, 2, size=n_noise).sum())
+        ed += float(rng.integers(-1, 2, size=n_noise).sum())  # noise
 
         flow_t = ed / p.n_agents
+        if t >= p.burn_in:
+            flow_series.append(flow_t)
         acc_ed += ed
         if (t + 1) % batch_interval == 0:  # batch 境界で一括清算
             dlog = p.lam * acc_ed / (p.n_agents * batch_interval)
@@ -103,8 +151,12 @@ def simulate(
         else:  # バッチ内: 価格は動かない
             pret_t = 0.0
 
-        sig = pret_t if model == "A" else flow_t  # A=価格 return / B=注文流
-        sig_s[t + 1] = sig_s[t] + sig
-        sig_s2[t + 1] = sig_s2[t] + sig * sig
+        p_s[t + 1] = p_s[t] + pret_t
+        p_s2[t + 1] = p_s2[t] + pret_t * pret_t
+        f_s[t + 1] = f_s[t] + flow_t
+        f_s2[t + 1] = f_s2[t] + flow_t * flow_t
 
-    return np.asarray(bret, dtype=np.float64)
+    rets = np.asarray(bret, dtype=np.float64)
+    if with_flow:
+        return rets, np.asarray(flow_series, dtype=np.float64)
+    return rets

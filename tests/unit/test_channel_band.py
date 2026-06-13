@@ -39,3 +39,19 @@ def test_determinism() -> None:
     assert not np.array_equal(
         simulate("A", 10, seed=3, params=SMALL), simulate("A", 10, seed=4, params=SMALL)
     )
+
+
+def test_continuous_adaptive_equals_A() -> None:
+    """連続: 両チャネル同一 → 学習(adaptive)は固定 A と一致(学習が見えない)。batch で分岐。"""
+    assert np.array_equal(
+        simulate("A", 1, seed=7, params=SMALL), simulate("adaptive", 1, seed=7, params=SMALL)
+    )
+    assert not np.array_equal(
+        simulate("A", 10, seed=7, params=SMALL), simulate("adaptive", 10, seed=7, params=SMALL)
+    )
+
+
+def test_with_flow_returns_pair() -> None:
+    """with_flow=True で (batch_returns, order-flow 系列) を返す(案3 microstructure)。"""
+    rets, flow = simulate("A", 5, seed=7, params=SMALL, with_flow=True)
+    assert rets.ndim == 1 and flow.ndim == 1 and flow.size > rets.size
