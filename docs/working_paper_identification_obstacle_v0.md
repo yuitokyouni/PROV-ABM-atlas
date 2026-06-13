@@ -27,13 +27,19 @@ of their θ-sensitivity, not by whether their definition references θ (every pr
 does, to some order); it is computable before any data (the sensitivities are properties of the
 constructed models); and it requires no single, injective "point of action," so it applies to
 batch-auction and speed-bump policies whose action is diffuse in time. The apparent tension between
-(i) and (ii) is not structural: two functions generically cross transversally — equal value, unequal
-slope — and the three prior attempts failed because the observable they used collapsed the crossing
-(raw trajectories force equal value to mean identical function; return moments give equal slope
-across models). Two conditions bound the criterion: it requires θ-smoothness of F (a discrete,
-non-monotone response, as in our N=20 artifact, is where it fails), and O must be a pre-specified
-small set of decision-relevant observables (searching arbitrary functionals re-introduces the
-circularity at the level of observable choice).
+(i) and (ii) is not structural but asymmetric in the dimension m of the observable class: a local
+identifiability condition (on the mixed Jacobian ∂²g/∂θ∂φ along the level-preserving directions)
+shows that adding linearly-independent θ-sensitive observables relaxes the tension, up to a ceiling
+set by the mechanisms' calibration freedom (beyond which level-equivalence itself becomes
+infeasible — the calibration-failure branch). The three prior attempts failed because the observable
+they used collapsed the joint condition (raw trajectories force equal value to mean identical
+function; return moments give equal slope across models). Three bounds pin m: a floor (enough
+independent θ-sensitive observables to separate the derivative), a theoretical ceiling (m below the
+mechanisms' parameter freedom), and a statistical ceiling (the sensitivity vector's dimension below
+the number of seeds, for the finite-sample test). Two further conditions hold: the criterion needs
+θ-smoothness of F (a discrete, non-monotone response, as in our N=20 artifact, is where it fails),
+and O must be a pre-specified small set of decision-relevant observables (searching arbitrary
+functionals re-introduces the circularity at the level of observable choice).
 
 ---
 
@@ -85,20 +91,47 @@ Distinct" の文字通りの数学的意味である。
 なのは近さでなく機構間の感度差であり、それは構成すれば計算できる。** 作用点はどこを**探すか**を導き、
 感度基準が**決める**。
 
-### 2.3 「2要件の緊張」は、誤った O が横断交差を潰した症状
+### 2.3 緊張は構造的不可能でなく、観測量次元に対し非対称（局所識別条件）
 
-(i) と (ii) は一般には緊張しない。2つの関数 F_1, F_2 が θ0 で一致し、そこで異なる微分を持つ（横断的に
-交わる）のは generic で、特別な事象ではない。前版の「構造的障害」という見え方は、**誤った O が交差を
-潰した症状**である:
+(i)(ii) の両立を「やってみないと分からない」に痩せさせない。理論が言える方向性は、緊張の**観測量次元 m
+に対する非対称性**である。
 
-- 強すぎる O（生 trajectory の任意差）: F_1(θ0)=F_2(θ0) が関数の恒等を強制 → ∂ も同一 → (ii) 不成立
-  （§3.1 channel-band）。
-- 非識別的 O（PRISM の日次 return moment）: ∂F が機構間で縮退 → (ii) 不成立（§3.3 PRISM）。
-- 識別的 O（機構間で ∂F が異なる microstructure 量）: θ0 で値を合わせ微分を分ける横断交差が generic に
-  存在しうる。その O が、政策関連かつ事前指定の小集合の中に在るかが §5 の問い。
+機構を区別するパラメータを φ（M1, M2 は各々パラメータを持つ機構族で、calibratable 自由度を p_1, p_2 と
+する）、事前指定 O の m 個のモーメント期待値を g(φ, θ) ∈ R^m とする。
 
-### 2.4 2つの適用条件
+- **レベル等価（i）**: g(φ_1, θ0) = g(φ_2, θ0)。m 本の制約。(φ_1, φ_2) ∈ R^{p_1+p_2} で解くので、解集合は
+  generically (p_1+p_2 − m) 次元で、**p_1+p_2 ≥ m でなければ非空でない**（レベル等価の機構自由度天井）。
+- **微分分離（ii）**: そのレベル保存解集合の上で ∂g/∂θ が機構間で異なること。局所には、レベル保存方向
+  （∂g/∂φ の核）上で混合ヤコビアン **∂²g/∂θ∂φ that非零**であること（= θ 微分が、レベルを動かさない φ の
+  変化で変わる）。これが**局所識別条件**。
 
+ここから理論が言える非対称性:
+
+- **次元単調性（上限つき）**: θ に対し**線形独立に**感応する O を増やす（m↑、かつ ∂g/∂θ の成分が互いに
+  線形独立）ほど、(ii) の微分分離に使える次元が増え、両立が容易になる。冗長な O（互いに θ 相関）を足して
+  も線形独立成分は増えず単調性は効かないので、効くのは「線形独立に θ 感応する O」に限る。線形独立性は
+  ∂g/∂θ の機構別ベクトルのランクとして**構成すれば計算できる**。
+- **機構自由度天井**: ただし単調性は **m < p_1+p_2 の範囲でのみ**。m が機構の calibratable 自由度
+  p_1+p_2 に達すると、レベル等価（i）自体が満たせなくなる ―― **これは §5 の分岐 D（等価化 calibration の
+  失敗）と同一物**である（spread/depth/λ… を同時に TOST 等価まで合わせるのは m が増えるほど難しい。T/H で
+  SF を4次元合わせるのに H のパラメータが要ったのと同型）。
+
+**理論の scope**: 上記は**局所**識別条件（ヤコビアンのランク）であり、事前指定 O 内で識別的 O が**大域的
+に**存在するかは §5 の経験的問い。理論は「不可能性を斬る」＋「線形独立に θ 感応する O を機構自由度天井
+p_1+p_2 まで増やせ」という設計指針を与えるが、大域存在は構成して確かめる。大域存在定理は主張しない。
+
+### 2.4 m に課す3つの境界と、2つの適用条件
+
+§2.3 の理論天井と §6 の有限標本制約が、観測量次元 m を共通変数として **3つの境界**に締める:
+
+- **床**: 微分（ii）を分離するに足る、線形独立に θ 感応する O（m ≥ 最小）。
+- **理論天井**: m < p_1+p_2（超えるとレベル等価 i 不能 = 分岐 D）。
+- **統計天井**: md < n（モーメント次数 d、seed 数 n。超えると §6 の多変量検定の共分散が特異）。
+
+最適 m はこの間にあり、選び方は「**θ 感応が線形独立な O を選別して md を最小化しつつ識別力を保つ**」。
+これが §2.3（理論: m↑）と §6（有限標本: md↓）の衝突の解で、両者は分岐 D を介して一貫する。
+
+2つの適用条件:
 - **θ 滑らかさ**: 感度基準は ∂F/∂θ を要する。θ が離散（batch interval N）だと微分は差分になり、F(θ) が
   θ で非滑らか/非単調な領域では感度が well-defined でない。我々の batch dose-response の非単調（N=20 で
   生 CNN=1.00・要約統計 LR=0.55）は、この条件that破れた領域で CNN が感度でなく不連続（バッチのゼロ配置）を
@@ -111,7 +144,7 @@ Distinct" の文字通りの数学的意味である。
 
 ## 3. 3つの試行 —— 感度基準による再解釈
 
-### 3.1 channel-band（強すぎる O が横断交差を潰した）
+### 3.1 channel-band（強すぎる O がレベル等価を関数恒等に潰した）
 
 単一資産市場 `p_{t+1}=p_t·exp(λ·ED_t/N)` では return = λ·ED/N で価格と注文流が同一信号。価格を読む A と
 注文流を読む B は連続市場で bit 同一の出力を生む。観測等価を生系列（最強の O）で定義したため、
@@ -132,7 +165,8 @@ tick/取引税の効果を日次 return moment で測り、4機構の ∂F/∂θ
 ## 4. 主張しないこと
 
 - **一般的不可能性を主張しない**。識別的 O が存在するかは機構ペアと政策に依存する経験的問いで、§2.3 の
-  通り横断交差は generic である。
+  局所識別条件は不可能性を斬る（緊張は m に対し非対称で、線形独立 θ 感応 O を増やせば緩む）が、大域存在は
+  保証しない。理論は設計指針を与え、存在は構成して確かめる。
 - **ABM が道具として終わっているとは主張しない**。ABM は P2 で政策含意のある結果を出している。終わって
   いるのは「SF 再現が機構を識別する」パラダイムである。
 
@@ -142,7 +176,19 @@ tick/取引税の効果を日次 return moment で測り、4機構の ∂F/∂θ
 > genuinely 異機構ペア (M1, M2) に対し識別的な O が存在する。すなわち F_1(θ0)≈F_2(θ0) かつ ∂F_1/∂θ≠∂F_2/∂θ。
 
 **成功判定（事前登録）**: (i) F_1(θ0)≈F_2(θ0) は O での TOST 等価（差の CI が事前帯内）。(ii) ∂F_1/∂θ≠∂F_2/∂θ
-は、θ0 と θ0+Δ での O の変化量が機構間で ±2SE を超えて異なること（Δ は §2.4 の滑らかさが成り立つ範囲）。
+は、機構ごとの**政策シフトベクトル** S_k = [⟨o_j⟩(θ0+Δ) − ⟨o_j⟩(θ0)]_j（md 次元、観測量 m × モーメント
+次数 d）を seed 横断で SE つき推定し、**S_1 ≠ S_2** を検定すること（Δ は §2.4 の滑らかさが成り立つ範囲）。
+3つの実装規律を事前登録に含める:
+- **差分スキーム**: 前進差分 S_k = ⟨o⟩(θ0+Δ)−⟨o⟩(θ0) は O(Δ) バイアスを持ち、機構間で応答曲率
+  ∂²F/∂θ² が違うとバイアスが非対称に入り、S_1≠S_2 が真の微分差か曲率差由来かを分離できない。両側に
+  動かせる θ（batch interval）では**中心差分** [⟨o⟩(θ0+Δ)−⟨o⟩(θ0−Δ)]/2Δ（O(Δ²)）を使う。片側にしか
+  動かせない θ（tick は下限あり）では曲率交絡を limitation に明記する。
+- **多重性**: S_k は md 次元。成分ごとに検定すると md が増えるほど偽陽性（どれか1成分が違う）が上がる
+  ので、md 成分に Holm 補正をかける（P1 メインの family 層化と同型）。モーメント次数 d を増やす（裾も
+  見る）代償＝検出力の希薄化を明示する。
+- **有限標本**: 下記 S_1≠S_2 を md 次元の多変量検定で一括する場合、共分散行列の逆を要し md < n（seed
+  数）でなければ特異になる。md ≥ n では (i) 縮約共分散（Ledoit-Wolf）、(ii) 成分ごと Holm、のいずれかを
+  事前指定。§2.4 の3境界（理論天井 m<p_1+p_2、統計天井 md<n）に従い md を最小化して選ぶ。
 
 **分岐（後知恵の逃げ場を塞ぐ）**:
 - **A（支持）**: O で (i)(ii) ともに成立。
@@ -155,21 +201,30 @@ tick/取引税の効果を日次 return moment で測り、4機構の ∂F/∂θ
 
 ## 6. 検証設計（次段、感度の測定法 + order book）
 
-未確定の詰めどころ:
-1. **∂F/∂θ の測定法**: 候補 = (a) 各観測量モーメントの θ 感度ベクトル（有限差分）を機構ごとに出し、機構間
-   差を検定、(b) 分布間距離（Wasserstein 等）の θ 微分。刃: 有限差分の Δ 選択（小→ノイズ、大→非線形/非
-   滑らか §2.4）、分布微分の高次元性（事前指定 O の低次元モーメントに射影して回避）。
-2. **order book での構成**: 板厚・約定過程を持つ市場（P2 のインフラ）で M1, M2 を構成し、O = spread/depth/
-   impact で §5 を機械判定する。
+**∂F/∂θ の測定定式（確定方針）**: 分布微分そのものでなく、事前指定 O の md 個のモーメントに射影した
+**政策シフトベクトル** S_k = [⟨o_j⟩(θ0±Δ) の差]_j を機構ごとに seed 横断で推定し、機構間差 S_1≠S_2 を
+検定する（§5 の判定規則）。差分は両側可能な θ で中心差分。分布間距離（Wasserstein 等）の θ 微分は
+高次元で seed 効率が悪いので主測度に採らない。
+
+**次元設計原理**: §2.4 の3境界が m を締める。理論（§2.3）は線形独立 θ 感応 O を増やせと言い、有限標本
+（S_1≠S_2 の多変量検定）は md < n を要求する。両者の衝突の解 = **θ 感応が線形独立な O を選別して md を
+最小化しつつ識別力を保つ**。O 候補（spread, depth, Kyle λ, 約定間隔, odd-lot 比）の中から、機構別
+∂g/∂θ ベクトルのランクが高い小集合を事前選別する。
+
+**order book での構成**: 板厚・約定過程を持つ市場（P2 のインフラ）で M1, M2 を構成し、上記 O で §5 を
+機械判定する。channel-band の単一資産市場（price=net flow の決定論的関数）では価格と注文流が別 O に
+ならないので、order book が必須。
+
 実データ照合は同じ O を実在改革に適用する段（`docs/realdata_method_and_p3_coherence.md`）。
 
 ## 7. 含意
 
 ABM の検証論は「観測等価」を観測量クラスを明示せず用いてきた。SBI 批判は暗にそれを最強検出器へ押し上げ
 equifinality を空にした。本稿は、識別的観測量を**θ 感度の機構間差**で定義する: 観測等価（同じ点）と介入
-弁別（異なる接ベクトル）は横断交差として generic に両立し、決めるのは観測量の感度であって検出器の強弱
-ではない。機構識別を主張する ABM 研究は、用いる事前指定 O と、その O での感度の機構間差（構成から事前
-計算可能）を示さねばならない。Fagiolo, Moneta & Windrum (2007) 系の検証方法論に接続する。
+弁別（異なる接ベクトル）の両立は構造的不可能でなく観測量次元 m に対し非対称で（線形独立 θ 感応 O を
+機構自由度天井まで増やせば緩む）、決めるのは観測量の感度であって検出器の強弱ではない。機構識別を
+主張する ABM 研究は、用いる事前指定 O と、その O での感度の機構間差（構成から事前計算可能）を示さねば
+ならない。Fagiolo, Moneta & Windrum (2007) 系の検証方法論に接続する。
 
 ## 8. 関連
 - 3例: PRISM（内部・撤退済）、T/H（`docs/program_claims_v1.md`、Issue #11）、channel-band
