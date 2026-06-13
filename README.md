@@ -1,3 +1,7 @@
+> ⚠️ **このリポは [financial-abm-lab](https://github.com/yuitokyouni/financial-abm-lab) に統合され、archive されました。** 履歴ごと `imported/PROV-ABM-atlas/` に移管済み。新規作業はモノレポ側で行ってください。
+
+---
+
 # real-prism — 真・PRISM toy + PROV-ABM / Atlas framework
 
 [![CI](https://github.com/yuitokyouni/PROV-ABM-atlas/actions/workflows/ci.yml/badge.svg)](https://github.com/yuitokyouni/PROV-ABM-atlas/actions/workflows/ci.yml)
