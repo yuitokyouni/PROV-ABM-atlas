@@ -1,39 +1,39 @@
-# 観測等価の観測量クラス依存性 —— 観測量クラスは政策の作用点から演繹される
+# 観測等価と介入弁別性 —— 同じ点・異なる接ベクトルとしての定式化
 
-### Observable-Class Dependence of Observational Equivalence: The Class is Deduced from the Policy's Point of Action
+### Observationally Equivalent, Interventionally Distinct: A Sensitivity Formulation
 
-**ワーキングペーパー草稿 v1（2026-06-13）**。狙い: 主論文（JEDC）。P1 メイン（「SF 等価な異機構を
-介入で識別」）の、より深く正しい再定式化として統合する候補。§6 の予測は order book で検証する
-（本稿は §2 の定式化まで。検証は次段）。
+**ワーキングペーパー草稿 v2（2026-06-13）**。狙い: 主論文（JEDC）。P1 メイン（「SF 等価な異機構を
+介入で識別」）の、より深く正しい再定式化として統合する候補。本稿は §2 の定式化と §5 の予測まで。
+§6 の検証（感度の測定法 + order book での構成）は次段。
 
-> **改訂注記**: 前版 v0 は3試行の失敗を「介入による機構識別は構造的に不可能」と書いた。これは2つの
-> 過剰一般化を含む。(i) channel-band の局所失敗（単一資産 price=λ·flow）を「核が達成不能」へ拡大。
-> order book では price と flow は独立で、原因が消える。(ii) 「ABM」と「特定の証明戦略」を混同。ABM は
-> P2 で機能している。加えて、ジレンマを「強い/弱い検出器」で並べたのが効きすぎていた。観測等価は検出器
-> の強弱でなく政策の作用点が指定する観測量クラスで定義すべきである。v1 はこの定式化に置き換える。
+> **改訂史**: v0 は3試行の失敗を「構造的に不可能」と書いた（過剰一般化、撤回）。v1 は「観測量クラスは
+> 政策の作用点から演繹される」とした。v2 は v1 の「作用点演繹」基準の3つの穴（後述 §2.2）を受けて、
+> 識別性を**観測量の θ 感度の機構間差**で定義し直す。作用点演繹は捨てず感度基準の下位に置く。
 
 ---
 
 ## Abstract
 
-Whether two agent-based models (ABMs) are "observationally equivalent" is not absolute; it is
-relative to an observable class — the set of quantities admitted as observable. We argue that ABM
-mechanism identifiability by intervention depends decisively on this class, and that the class must
-be deduced from the policy's point of action in the market mechanism, independent of whether any
-particular quantity turns out to respond. For a tick-size policy, the point of action is the price
-grid, so the policy-relevant observables are the quantities defined at that level — quoted and
-effective spread, depth, price impact — while return-distribution statistics are downstream
-aggregates and are excluded a priori, before any measurement. The apparent tension between
-"observationally equivalent" and "differently responding to the intervention" is a symptom of
-choosing the class by detector strength rather than by the point of action: an over-strong class
-(any difference in a raw trajectory) admits only reparameterizations of one model; an
-over-weak or policy-irrelevant class (return moments under a tick change) carries no signal of the
-intervention; neither is the point-of-action class. Three prior attempts each chose the class
-wrongly in one of these three ways. We do not claim impossibility — causal inference distinguishes
-structures equivalent over a specified observable class — nor that ABMs are exhausted as a tool. We
-state a falsifiable prediction with a pre-registered success criterion and four outcome branches,
-including the branch in which two mechanisms cannot be calibrated to equivalence in the
-point-of-action class, and we specify its verification with order-book infrastructure.
+Whether two agent-based models (ABMs) are "observationally equivalent" is relative to an observable
+class. We give a sensitivity criterion for which observables make a policy intervention identify
+the mechanism, computable a priori from the constructed mechanisms and not from whether any quantity
+turns out to respond. For mechanisms M1, M2 with the distribution of an observable O written F_k(θ)
+under policy parameter θ, O is identifying for (M1, M2) at θ0 iff (i) F_1(θ0) ≈ F_2(θ0) — the two
+models coincide in O at the baseline policy — and (ii) ∂F_1/∂θ ≠ ∂F_2/∂θ at θ0 — the policy moves O
+differently for the two models. Condition (i) is "same point," condition (ii) is "different tangent
+vector"; together they are the literal content of observational equivalence with interventional
+distinctness. This criterion separates observables by the magnitude and the between-model difference
+of their θ-sensitivity, not by whether their definition references θ (every price-derived quantity
+does, to some order); it is computable before any data (the sensitivities are properties of the
+constructed models); and it requires no single, injective "point of action," so it applies to
+batch-auction and speed-bump policies whose action is diffuse in time. The apparent tension between
+(i) and (ii) is not structural: two functions generically cross transversally — equal value, unequal
+slope — and the three prior attempts failed because the observable they used collapsed the crossing
+(raw trajectories force equal value to mean identical function; return moments give equal slope
+across models). Two conditions bound the criterion: it requires θ-smoothness of F (a discrete,
+non-monotone response, as in our N=20 artifact, is where it fails), and O must be a pre-specified
+small set of decision-relevant observables (searching arbitrary functionals re-introduces the
+circularity at the level of observable choice).
 
 ---
 
@@ -41,123 +41,135 @@ point-of-action class, and we specify its verification with order-book infrastru
 
 ABM を市場設計政策の評価に用いる前提は「歴史データでは区別できない機構を、政策介入への応答で区別
 できる」である。これは2要件を要する: (a) 2モデルが観測データで区別不能（でなければ介入は冗長）、
-(b) 介入下で応答が異なる。本稿の主張は、(a) の成否が**何を観測量とするか**に依存し、その観測量クラスを
-**政策の作用点から演繹**しない限り、識別が空回りするか、選択that循環する、というものである。
+(b) 介入下で応答が異なる。本稿は、(a)(b) を満たす観測量を**機構の構成から事前計算できる**基準で特徴
+づける。
 
-## 2. 観測等価は観測量クラスに相対的であり、クラスは政策の作用点から演繹される
+## 2. 識別性の感度基準
 
-### 2.1 観測等価は観測量クラスに相対的
+### 2.1 観測等価は観測量クラス O に相対的
 
-「観測等価」は絶対概念でなく、観測量クラス O（何を観測できると認めるか）に相対的で、「O に属する量の
-下で2モデルが区別できない」を意味する。経済学が問題にする観測等価は「意思決定者が利用可能な統計量の
-下で区別できない」であり、「生の有限 trajectory を任意の検出器で見て少しでも違えば区別可能」ではない。
-後者を基準にすると相異なる確率過程はほぼ全て区別可能になり、equifinality が空になる。因果推論も、
-**観測変数の分布**（特定の O）が一致し介入分布が異なる構造を介入で区別する。観測等価は O に相対的である。
+「観測等価」は絶対概念でなく観測量クラス O に相対的で、「O に属する量の下で2モデルが区別できない」を
+意味する。経済学の観測等価は「意思決定者が利用可能な統計量の下で区別できない」であり、「生の有限
+trajectory を任意の検出器で見て少しでも違えば区別可能」ではない。後者を基準にすると相異なる確率過程は
+ほぼ全て区別可能になり equifinality が空になる。因果推論も、観測変数の分布（特定の O）の一致を介入で
+区別する。観測等価は O に相対的である。
 
-### 2.2 クラスは政策の作用点から演繹される（結果から選ばれない）
+### 2.2 識別的観測量 = θ 感度が機構間で異なる量
 
-O を結果（どの量が応答したか）から選ぶと循環する。後から「応答した量」を「正しいクラス」と呼ぶのは、
-channel-band で「縮退を壊す介入を後から選んだ」のと同型の循環の、クラス選択版である。これを避けるため、
-O の正しさを**結果と独立**に定める原理を置く:
+機構 M1, M2（市場結果を生成する確率過程）、政策パラメータ θ（tick size、batch interval）、観測量 O
+（市場結果の汎関数）を考える。Mk の下での O の分布を F_k(θ) と書く。
 
-> **原理（作用点演繹）**: 観測量クラス O は、政策that市場機構の中で物理的に作用する点（point of action）
-> で定義される量からなる。O は政策の作用機序のみから演繹され、「どの量が応答したか」を一切参照しない。
+> **定義（識別的観測量）**: O が政策 θ と機構ペア (M1, M2) に対して baseline θ0 で**識別的**であるとは、
+> (i) **F_1(θ0) ≈ F_2(θ0)**（O の分布で観測等価）かつ (ii) **∂F_1/∂θ|_{θ0} ≠ ∂F_2/∂θ|_{θ0}**（θ に
+> 対する O の動き方が機構間で異なる）こと。
 
-適用:
-- **tick size 政策**は**最小価格刻み（価格グリッド）**に作用する。グリッドの水準で定義される量 ——
-  quoted spread / effective spread（tick が下限を与える）、各価格水準の depth、price impact（グリッド
-  所与で flow が価格をどう動かすか）—— が O。**日次 return 分布**（GARCH persistence・尖度・ACF）は
-  価格パスを時間集約した**下流の派生量**で、グリッドより数段上の集約。よって tick の O ではない。
-- **batch auction 政策**は**清算のタイミング**に作用する。注文流のタイミングと価格更新の関係、バッチ内
-  vs バッチ間の動学が O。
+(i) は「同じ点」、(ii) は「異なる接ベクトル」。両者は "Observationally Equivalent, Interventionally
+Distinct" の文字通りの数学的意味である。
 
-この判定は**政策の定義のみから事前に**可能で、測定結果を参照しない。後述 §4.3 の通り、PRISM の return
-facts が不適切だったのは「検出できなかったから」ではなく、「tick の作用点（価格解像度）より下流の派生量
-だったから」であり、事前に判定できる。spread/depth が tick 介入に応答することを Aquilina et al. (2022) 等が
-実測している事実は、本原理の選択を**裏づける**が、選択が**依拠する**ものではない（選択は作用点から演繹済み）。
+この定義は、前版 v1 の「O が θ を定義上参照するか」基準の3つの穴を塞ぐ:
 
-### 2.3 「2要件の緊張」はクラス誤選択の症状であり、作用点クラスで解消する
+- **穴1（二値では連続な依存度を割れない）**: return も価格から計算され、価格はグリッド θ 上にある
+  （bid-ask bounce・price discreteness が return の自己相関・分散に θ 依存を与える）。よって return
+  moment も θ を定義上参照し、「参照の有無」では spread と分けられない。感度基準は参照の有無でなく
+  ∂F/∂θ の大小で測るので、return も spread も同一尺度で比較でき、機構間差を連続量で言える。
+- **穴2（後知恵）**: ∂F_k/∂θ は機構を構成すれば計算できる量で、実データの検出結果を参照しない。PRISM の
+  失敗は「return moment の ∂F/∂θ が4機構間でほぼ同一（~10⁻⁴ に縮退）」と**事前計算可能**な形で言える
+  （これは既に測られた縮退そのもの）。「作用点に近い」は結果非依存に言えても「検出される」を導けず、
+  v1 は実質 Aquilina 等の実測に依拠していた。感度基準は ∂F/∂θ の機構間差を直接計算するので、この橋を
+  実データに頼らず架ける。
+- **穴3（作用点が非単射）**: batch auction は単一の作用点対象を持たず、清算タイミングに作用して価格・
+  注文流・約定タイミングの複数量に同時に効く。感度基準は単一作用点を要求せず、「どの O の感度が機構間で
+  分かれるか」を直接計算するので、作用点が時間構造に分散する政策にも適用できる。
 
-(a) と (b) の緊張は、観測等価を**検出器の強弱**で定義したときにのみ生じる見かけの症状である。O を作用点で
-固定すると次のように整理され、構造的障害ではなくなる:
+作用点演繹は捨てず感度基準の下位に置く: **作用点に近い O は経験的に θ 感度が高い傾向があるが、決定的
+なのは近さでなく機構間の感度差であり、それは構成すれば計算できる。** 作用点はどこを**探すか**を導き、
+感度基準が**決める**。
 
-- **強すぎる O**（生 trajectory の任意差を読む検出器）: 通るのは出力過程が恒等のペア、すなわち再
-  パラメータ化のみ（§4.1 channel-band）。
-- **弱すぎる/政策無関係な O**（tick 政策に対する日次 return moment）: 介入の信号がそこに無い（§4.3 PRISM）。
-- **作用点 O**（tick/batch に対する microstructure 量）: 上の両極のいずれでもない。そこで (a) かつ (b) を
-  満たすペアが存在するかは**経験的な問い**であり（§6）、構造的不可能性ではない。
+### 2.3 「2要件の緊張」は、誤った O が横断交差を潰した症状
 
-## 3. 3つの試行 —— 観測量クラスの3つの誤った選び方
+(i) と (ii) は一般には緊張しない。2つの関数 F_1, F_2 が θ0 で一致し、そこで異なる微分を持つ（横断的に
+交わる）のは generic で、特別な事象ではない。前版の「構造的障害」という見え方は、**誤った O が交差を
+潰した症状**である:
 
-### 3.1 channel-band（退化した市場 + 強すぎるクラス）
+- 強すぎる O（生 trajectory の任意差）: F_1(θ0)=F_2(θ0) が関数の恒等を強制 → ∂ も同一 → (ii) 不成立
+  （§3.1 channel-band）。
+- 非識別的 O（PRISM の日次 return moment）: ∂F が機構間で縮退 → (ii) 不成立（§3.3 PRISM）。
+- 識別的 O（機構間で ∂F が異なる microstructure 量）: θ0 で値を合わせ微分を分ける横断交差が generic に
+  存在しうる。その O が、政策関連かつ事前指定の小集合の中に在るかが §5 の問い。
 
-単一資産の超過需要市場 `p_{t+1}=p_t·exp(λ·ED_t/N)` では return = λ·ED/N で価格と注文流が同一信号。価格を
-読む A と注文流を読む B は連続市場で bit 同一の出力を生む。これは異機構の equifinality ではなく、同一
-モメンタム関数の入力単位の違い（再パラメータ化）。観測等価を強すぎる O（生系列の CNN）で定義したことと、
-市場が退化している（単一資産で price=net flow）ことが重なった。order book では price は net flow の決定論的
-関数でなく、価格を読むことと注文流を読むことは作用点クラスでも独立な観測になりうる。channel-band は「核が
-達成不能」ではなく「単一資産 toy が不適切」を示す。
+### 2.4 2つの適用条件
 
-### 3.2 T/H（強すぎるクラス）
+- **θ 滑らかさ**: 感度基準は ∂F/∂θ を要する。θ が離散（batch interval N）だと微分は差分になり、F(θ) が
+  θ で非滑らか/非単調な領域では感度が well-defined でない。我々の batch dose-response の非単調（N=20 で
+  生 CNN=1.00・要約統計 LR=0.55）は、この条件that破れた領域で CNN が感度でなく不連続（バッチのゼロ配置）を
+  読んだ例と再解釈できる。感度基準は θ 応答が滑らかな領域でのみ適用する。
+- **O の事前指定（過適合の防止）**: 感度基準は「∂F が機構間で異なる O を探す」を許すので、O を任意の
+  汎関数まで広げると識別的 O を自明に見つけられ、「識別的 O を後から選んだ」という循環（介入選択の循環の
+  O 版）that再発する。これを塞ぐため、**O は意思決定者が実際に用いる経済的に意味のある観測量の、事前
+  指定された小集合に限る**（§2.1 の経済学的定義と作用点ヒューリスティックが選択を導き、事前登録する）。
+  任意汎関数の探索は禁じる。
 
-共有 chassis 上で投機ブロックのみ差し替えた異機構ペア。要約統計（SF1-4）を joint calibration で一致させ、
-要約統計分類器の精度を 0.58 まで下げたが、held-out の生系列 CNN は 0.85–0.91 で分離した。これは観測等価を
-**最強の検出器（生 trajectory の任意差）**で定義した帰結である。要約統計クラスでは等価だが、要約統計も
-tick/batch の作用点クラスではない。T/H は、O を生 CNN（強すぎ）に取ると対象が消え、要約統計（政策無関係）に
-取ると介入が冗長に見える、両極の不適切さを示す。
+## 3. 3つの試行 —— 感度基準による再解釈
 
-### 3.3 PRISM（間違ったクラス）
+### 3.1 channel-band（強すぎる O が横断交差を潰した）
 
-PRISM（撤退済の内部試行）は、tick/取引税という microstructure 介入の効果を、日次 return-distribution 量で
-測り、有効な自然実験（JPX 2014 tick）でも全6量の信頼区間がゼロを跨いだ。加えて用いた4 ABM が同一方程式の
-パラメータ変種で独立でなかった。§2.2 の作用点原理により、これは事前に判定できる誤りである: 日次 return
-分布は tick の作用点（価格グリッド）より下流の派生量で、tick の O ではない。正しい O（spread/depth/impact、
-intraday）であれば、§2.2 の文献が示す通り tick 効果は検出される。
+単一資産市場 `p_{t+1}=p_t·exp(λ·ED_t/N)` では return = λ·ED/N で価格と注文流が同一信号。価格を読む A と
+注文流を読む B は連続市場で bit 同一の出力を生む。観測等価を生系列（最強の O）で定義したため、
+F_A(θ0)=F_B(θ0) が関数の恒等を強制し、∂F も同一になった（再パラメータ化）。識別的 O の (ii) が原理的に
+立たない。order book では price は net flow の決定論的関数でなく、価格と注文流は別の O になりうる。
+
+### 3.2 T/H（強すぎる O）
+
+異機構ペア。要約統計クラスでは F を一致させられた（LR=0.58）が、生系列 CNN（最強の O）が 0.85–0.91 で
+分離した。要約統計も tick/batch の感度が機構間で分かれる保証がなく、識別的 O として選ばれていない。
+
+### 3.3 PRISM（非識別的 O）
+
+tick/取引税の効果を日次 return moment で測り、4機構の ∂F/∂θ が ~10⁻⁴ に縮退（モデルが同一方程式の
+パラメータ変種で独立でない）。(ii) が立たない。これは §2.2 穴2 の通り、機構を構成すれば事前計算できる
+縮退であって、実データの非検出を待つ必要がない。
 
 ## 4. 主張しないこと
 
-- **一般的不可能性を主張しない**。因果推論は、O を観測変数分布に取れば観測等価な構造を介入で区別する。
-  本稿は「観測等価を検出器の強弱で定義するのが誤りで、政策の作用点が指定する O で定義すべき」を主張する。
-- **ABM が道具として終わっているとは主張しない**。ABM は P2（Calvano 移植可能性監査、batch×共謀の境界、
-  BCS 接地）で政策含意のある結果を出している。終わっているのは「SF 再現が機構を識別する」パラダイムであり、
-  それは本プログラムが当初から賭けていた命題である。本稿はその一段深い形（介入応答による識別すら、O の
-  定義次第で空回りする）を特定し、正しい O の原理を与える。
+- **一般的不可能性を主張しない**。識別的 O が存在するかは機構ペアと政策に依存する経験的問いで、§2.3 の
+  通り横断交差は generic である。
+- **ABM が道具として終わっているとは主張しない**。ABM は P2 で政策含意のある結果を出している。終わって
+  いるのは「SF 再現が機構を識別する」パラダイムである。
 
-## 5. 反証可能な予測と、事前登録した成功判定・分岐（§6 検証の設計）
+## 5. 反証可能な予測と事前登録分岐
 
-> **予測**: 観測等価を tick/batch の作用点クラス O（order book の spread・depth・price impact、intraday）で
-> 定義すると、(a) O で観測等価かつ (b) 介入（tick/batch）で O が分離する機構ペアが存在する。
+> **予測**: 事前指定した政策関連の観測量クラス O（order book の spread・depth・price impact、intraday）に、
+> genuinely 異機構ペア (M1, M2) に対し識別的な O が存在する。すなわち F_1(θ0)≈F_2(θ0) かつ ∂F_1/∂θ≠∂F_2/∂θ。
 
-**成功判定（事前登録）**: 2機構が「O で観測等価」とは、改革前データで O の各量（および同時分布）が TOST で
-等価（差の CI が事前帯内）と判定されること。「O で分離」とは、改革後に O の量が seed 横断 ±2SE で異なること。
+**成功判定（事前登録）**: (i) F_1(θ0)≈F_2(θ0) は O での TOST 等価（差の CI が事前帯内）。(ii) ∂F_1/∂θ≠∂F_2/∂θ
+は、θ0 と θ0+Δ での O の変化量が機構間で ±2SE を超えて異なること（Δ は §2.4 の滑らかさが成り立つ範囲）。
 
-**4つの分岐（事前登録、後知恵の逃げ場を塞ぐ）**:
-- **A（予測支持）**: O で等価化が達成でき、介入で O が分離する。
-- **B（予測反証）**: O で等価化が達成できるが、介入下でも O が等価（応答も等価）。→ 作用点クラスでも識別
-  できず、主張は弱い形（パラメータ可識別性、または要約統計レベル）に後退する。
-- **C（設計失敗）**: O で等価化が達成できるが、その2機構が再パラメータ化に潰れる（channel-band の再来）。
-  → genuinely 異機構でなく、設計をやり直す。
-- **D（検証不能）**: **2機構を O で等価化する calibration that達成できない**（spread/depth/impact の同時
-  分布を2機構で TOST 通過まで一致させられない）。→ 「この設計では予測を検証できなかった」と正直に報告し、
-  反証とも支持とも主張しない。T/H が2自由度で要約統計を合わせられたのに対し、microstructure 同時分布の
-  一致は遥かに難しく、この分岐は現実的に起こりうる。
+**分岐（後知恵の逃げ場を塞ぐ）**:
+- **A（支持）**: O で (i)(ii) ともに成立。
+- **B（反証）**: (i) は成立するが (ii) 不成立（∂F が機構間で一致）。→ 識別性は弱い形に後退。
+- **C（設計失敗）**: (i) が成立するが2機構が再パラメータ化に潰れる。→ genuinely 異機構でなく設計やり直し。
+- **D（検証不能）**: O で (i) の等価化 calibration that達成できない（spread/depth/impact の同時分布を2機構で
+  TOST 通過まで合わせられない）。→ 「この設計では検証できなかった」と報告し、反証とも支持とも主張しない。
+- **滑らかさ違反**: Δ を取る θ 範囲で F が非滑らか（§2.4）なら、その範囲を除外し、滑らかな範囲で判定する。
+  除外して滑らかな範囲が残らなければ分岐 D 扱い。
 
-## 6. 検証設計（order book、次段）
+## 6. 検証設計（次段、感度の測定法 + order book）
 
-1. order book（板厚・約定過程。P2 のインフラが該当）で、価格に反応する機構と注文流/板に反応する機構を
-   構成する。単一資産と違い、両者は連続でも作用点クラス O で異なりうる。
-2. 改革前データで §5 の成功判定（O での TOST 等価化）を試みる。達成不能なら分岐 D を報告して終了。
-3. 達成できたら、tick/batch 介入下で O が分離するか（分岐 A）、しないか（B）、潰れるか（C）を §5 の規則で
-   機械判定する。
-実データ照合（JPX 2014）は、同じ O を実在の改革に適用する段で、`docs/realdata_method_and_p3_coherence.md`。
+未確定の詰めどころ:
+1. **∂F/∂θ の測定法**: 候補 = (a) 各観測量モーメントの θ 感度ベクトル（有限差分）を機構ごとに出し、機構間
+   差を検定、(b) 分布間距離（Wasserstein 等）の θ 微分。刃: 有限差分の Δ 選択（小→ノイズ、大→非線形/非
+   滑らか §2.4）、分布微分の高次元性（事前指定 O の低次元モーメントに射影して回避）。
+2. **order book での構成**: 板厚・約定過程を持つ市場（P2 のインフラ）で M1, M2 を構成し、O = spread/depth/
+   impact で §5 を機械判定する。
+実データ照合は同じ O を実在改革に適用する段（`docs/realdata_method_and_p3_coherence.md`）。
 
 ## 7. 含意
 
-ABM の検証論は「観測等価」を観測量クラスを明示せず用いてきた（SF=要約統計、または暗黙の「データ」）。
-SBI 批判は暗にそれを最強検出器へ押し上げ equifinality を空にした。本稿は、観測等価を**政策の作用点が指定
-する観測量クラス**で定義せよ、と主張する。機構識別を主張する ABM 研究は、用いる O と、その作用点演繹の
-根拠、その O で対象が genuinely 異機構か再パラメータ化かを明示せねばならない。3例は O を誤る3つの仕方が
-それぞれ失敗する様を示す。Fagiolo, Moneta & Windrum (2007) 系の検証方法論に正面から接続する。
+ABM の検証論は「観測等価」を観測量クラスを明示せず用いてきた。SBI 批判は暗にそれを最強検出器へ押し上げ
+equifinality を空にした。本稿は、識別的観測量を**θ 感度の機構間差**で定義する: 観測等価（同じ点）と介入
+弁別（異なる接ベクトル）は横断交差として generic に両立し、決めるのは観測量の感度であって検出器の強弱
+ではない。機構識別を主張する ABM 研究は、用いる事前指定 O と、その O での感度の機構間差（構成から事前
+計算可能）を示さねばならない。Fagiolo, Moneta & Windrum (2007) 系の検証方法論に接続する。
 
 ## 8. 関連
 - 3例: PRISM（内部・撤退済）、T/H（`docs/program_claims_v1.md`、Issue #11）、channel-band
